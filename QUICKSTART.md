@@ -6,7 +6,7 @@ Get up and running with AskQL in 5 minutes!
 
 - [ ] Python 3.9 or higher installed
 - [ ] Node.js 18 or higher installed  
-- [ ] OpenAI API key (get from https://platform.openai.com/api-keys)
+- [ ] Ollama installed (get from https://ollama.ai) OR OpenAI API key
 - [ ] A SQLite database file OR MySQL database access
 
 ## Step-by-Step Setup
@@ -17,7 +17,25 @@ Get up and running with AskQL in 5 minutes!
 cd /path/to/SQL
 ```
 
-### 2. Backend Setup (2 minutes)
+### 2. Install and Setup Ollama (Local LLM)
+
+```bash
+# Install Ollama from https://ollama.ai
+# For macOS/Linux:
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull a model (recommended: codellama for SQL)
+ollama pull codellama
+# Or use llama2, mistral, etc.
+
+# Ollama will start automatically on port 11434
+```
+
+**Alternative: Use OpenAI instead**
+- Skip Ollama installation
+- Get API key from https://platform.openai.com/api-keys
+
+### 3. Backend Setup (2 minutes)
 
 ```bash
 # Go to backend directory
@@ -35,11 +53,17 @@ pip install -r requirements.txt
 # Configure environment
 cp .env.example .env
 
-# Edit .env and add your OpenAI API key
-# OPENAI_API_KEY=sk-your-key-here
+# Edit .env file:
+# For Ollama (recommended):
+#   LLM_PROVIDER=ollama
+#   OLLAMA_MODEL=codellama
+#
+# For OpenAI:
+#   LLM_PROVIDER=openai
+#   OPENAI_API_KEY=sk-your-key-here
 ```
 
-### 3. Frontend Setup (2 minutes)
+### 4. Frontend Setup (2 minutes)
 
 Open a NEW terminal window:
 
@@ -51,7 +75,7 @@ cd frontend
 npm install
 ```
 
-### 4. Start the Application (1 minute)
+### 5. Start the Application (1 minute)
 
 **Terminal 1 (Backend):**
 ```bash
@@ -76,7 +100,7 @@ You should see:
   ➜  Local:   http://localhost:3000/
 ```
 
-### 5. Open Your Browser
+### 6. Open Your Browser
 
 Visit: http://localhost:3000
 
@@ -153,8 +177,16 @@ Now upload `test.db` in the UI!
   pip install -r requirements.txt
   ```
 
-**Error**: `OpenAI API key not found`
-- **Solution**: Check your `.env` file has `OPENAI_API_KEY=sk-...`
+**Error**: `Cannot connect to Ollama` or `Connection refused`
+- **Solution**: 
+  1. Make sure Ollama is installed and running: `ollama serve`
+  2. Check Ollama is accessible: `curl http://localhost:11434/api/tags`
+  3. Pull a model if not done: `ollama pull codellama`
+
+**Error**: `OpenAI API key not found` (when using OpenAI)
+- **Solution**: 
+  1. Check your `.env` file has `LLM_PROVIDER=openai` and `OPENAI_API_KEY=sk-...`
+  2. Or switch to Ollama: Set `LLM_PROVIDER=ollama` in `.env`
 
 ### Frontend won't start
 

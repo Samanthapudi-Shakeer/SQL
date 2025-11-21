@@ -1,7 +1,7 @@
 """NL to SQL generation service using LLM."""
 import json
+import requests
 from typing import List, Dict, Optional
-from openai import OpenAI
 from app.models.schemas import DatabaseSchema, SQLResponse
 from app.core.config import settings
 
@@ -10,7 +10,15 @@ class SQLGenerator:
     """Generates SQL from natural language using LLM."""
     
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        self.provider = settings.LLM_PROVIDER
+        if self.provider == "openai":
+            from openai import OpenAI
+            self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        elif self.provider == "ollama":
+            self.ollama_url = settings.OLLAMA_BASE_URL
+            self.model = settings.OLLAMA_MODEL
+        else:
+            raise ValueError(f"Unsupported LLM provider: {self.provider}")
     
     def generate_sql(
         self,
@@ -66,17 +74,12 @@ If ambiguous, respond:
         user_prompt = f"{context_str}\n\nQuestion: {question}\n\nGenerate the SQL query:"
         
         try:
-            response = self.client.chat.completions.create(
-                model=settings.LLM_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=settings.LLM_TEMPERATURE,
-                max_tokens=settings.LLM_MAX_TOKENS
-            )
-            
-            content = response.choices[0].message.content.strip()
+            if self.provider == "openai":
+                content = self._call_openai(system_prompt, user_prompt)
+            elif self.provider == "ollama":
+                content = self._call_ollama(system_prompt, user_prompt)
+            else:
+                raise ValueError(f"Unsupported provider: {self.provider}")
             
             # Parse JSON response
             if content.startswith("```json"):
@@ -111,6 +114,41 @@ If ambiguous, respond:
                 clarification_question="I encountered an error. Could you try asking differently?",
                 confidence=0.0
             )
+    
+    def _call_openai(self, system_prompt: str, user_prompt: str) -> str:
+        """Call OpenAI API."""
+        response = self.client.chat.completions.create(
+            model=settings.LLM_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS
+        )
+        return response.choices[0].message.content.strip()
+    
+    def _call_ollama(self, system_prompt: str, user_prompt: str) -> str:
+        """Call Ollama API."""
+        # Combine system and user prompts for Ollama
+        combined_prompt = f"{system_prompt}\n\n{user_prompt}"
+        
+        url = f"{self.ollama_url}/api/generate"
+        payload = {
+            "model": self.model,
+            "prompt": combined_prompt,
+            "stream": False,
+            "options": {
+                "temperature": settings.LLM_TEMPERATURE,
+                "num_predict": settings.LLM_MAX_TOKENS
+            }
+        }
+        
+        response = requests.post(url, json=payload, timeout=60)
+        response.raise_for_status()
+        
+        result = response.json()
+        return result.get("response", "").strip()
     
     def _build_schema_description(self, schema: DatabaseSchema) -> str:
         """Build a text description of the database schema."""

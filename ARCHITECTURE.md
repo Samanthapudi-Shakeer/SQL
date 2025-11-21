@@ -80,7 +80,8 @@ AskQL is a full-stack application that converts natural language questions into 
 - Generate schema JSON representation
 
 #### 3. NL→SQL Generator
-- LLM-based query generation (OpenAI GPT-4 or similar)
+- LLM-based query generation (Ollama or OpenAI GPT-4)
+- Support for local models (llama2, codellama, mistral)
 - Schema-aware prompting
 - Context management
 - Query refinement
@@ -239,7 +240,7 @@ Get query history
 ### Backend
 - **Framework**: FastAPI
 - **Database**: SQLAlchemy (ORM + Core)
-- **LLM**: OpenAI API (GPT-4)
+- **LLM**: Ollama (local) or OpenAI API (GPT-4)
 - **Validation**: sqlparse, sqlglot
 - **File handling**: aiofiles
 
@@ -258,7 +259,10 @@ Get query history
 ## Deployment Considerations
 
 1. **Environment Variables**
-   - OPENAI_API_KEY
+   - LLM_PROVIDER (ollama or openai)
+   - OLLAMA_BASE_URL (if using Ollama)
+   - OLLAMA_MODEL (if using Ollama)
+   - OPENAI_API_KEY (if using OpenAI)
    - DATABASE_URL (optional default)
    - CORS_ORIGINS
    - MAX_FILE_SIZE

@@ -1,6 +1,6 @@
 """Application configuration."""
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -11,9 +11,12 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     
-    # OpenAI
-    OPENAI_API_KEY: str
-    LLM_MODEL: str = "gpt-4"
+    # LLM Configuration
+    LLM_PROVIDER: str = "ollama"  # "ollama" or "openai"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama2"
+    OPENAI_API_KEY: Optional[str] = None
+    LLM_MODEL: str = "llama2"  # Default model name
     LLM_TEMPERATURE: float = 0.1
     LLM_MAX_TOKENS: int = 1000
     

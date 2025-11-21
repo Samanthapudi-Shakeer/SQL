@@ -29,7 +29,7 @@ A full-stack application that converts natural language questions into executabl
                   ▼
 ┌─────────────────────────────────────────┐
 │        FastAPI Backend                   │
-│  • NL→SQL Generator (OpenAI GPT-4)      │
+│  • NL→SQL Generator (Ollama/OpenAI)     │
 │  • SQL Validator & Safety Layer         │
 │  • Database Manager (SQLAlchemy)        │
 │  • Query Executor                        │
@@ -46,7 +46,7 @@ A full-stack application that converts natural language questions into executabl
 
 - **Python 3.9+**
 - **Node.js 18+**
-- **OpenAI API Key** (required for NL→SQL generation)
+- **Ollama** (running locally) OR **OpenAI API Key**
 - **MySQL Server** (optional, for MySQL connections)
 
 ## 🔧 Installation & Setup
@@ -69,17 +69,38 @@ A full-stack application that converts natural language questions into executabl
    pip install -r requirements.txt
    ```
 
-4. **Configure environment**:
+4. **Install and run Ollama** (if using local LLM):
+   ```bash
+   # Install Ollama from https://ollama.ai
+   # Then pull a model, e.g., llama2
+   ollama pull llama2
+   
+   # Start Ollama (usually runs automatically on port 11434)
+   ollama serve
+   ```
+
+5. **Configure environment**:
    ```bash
    cp .env.example .env
    ```
    
-   Edit `.env` and add your OpenAI API key:
+   Edit `.env` file:
+   
+   **For Ollama (Local LLM):**
+   ```env
+   LLM_PROVIDER=ollama
+   OLLAMA_BASE_URL=http://localhost:11434
+   OLLAMA_MODEL=llama2
    ```
+   
+   **For OpenAI:**
+   ```env
+   LLM_PROVIDER=openai
    OPENAI_API_KEY=your_openai_api_key_here
+   LLM_MODEL=gpt-4
    ```
 
-5. **Run the backend**:
+6. **Run the backend**:
    ```bash
    cd app
    python main.py
@@ -285,8 +306,23 @@ All queries are tracked in the history panel on the right sidebar, showing:
 ### Environment Variables
 
 **Backend (`.env`)**:
+
+**Option 1: Using Ollama (Local)**
 ```env
-OPENAI_API_KEY=sk-...              # Required
+LLM_PROVIDER=ollama                 # Use local Ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama2                 # or mistral, codellama, etc.
+LLM_TEMPERATURE=0.1                 # Lower = more deterministic
+MAX_FILE_SIZE=52428800              # 50MB
+MAX_QUERY_ROWS=1000                 # Result limit
+QUERY_TIMEOUT=30                    # Seconds
+CORS_ORIGINS=http://localhost:3000
+```
+
+**Option 2: Using OpenAI**
+```env
+LLM_PROVIDER=openai                 # Use OpenAI API
+OPENAI_API_KEY=sk-...               # Required for OpenAI
 LLM_MODEL=gpt-4                     # or gpt-3.5-turbo
 LLM_TEMPERATURE=0.1                 # Lower = more deterministic
 MAX_FILE_SIZE=52428800              # 50MB
@@ -297,16 +333,37 @@ CORS_ORIGINS=http://localhost:3000
 
 ### Customization
 
-**Change LLM Model**: Edit `LLM_MODEL` in `.env` (gpt-4, gpt-3.5-turbo)
+**Change LLM Provider**: Set `LLM_PROVIDER` to `ollama` or `openai` in `.env`
+**Change Ollama Model**: Edit `OLLAMA_MODEL` in `.env` (llama2, mistral, codellama, etc.)
+**Change OpenAI Model**: Edit `LLM_MODEL` in `.env` (gpt-4, gpt-3.5-turbo)
 **Adjust Row Limit**: Edit `MAX_QUERY_ROWS` in `.env`
 **Modify UI Theme**: Edit Tailwind classes in component files
+
+### Ollama Model Recommendations
+
+For best results with SQL generation, consider these models:
+- **llama2** (7B/13B) - Good balance of speed and accuracy
+- **codellama** - Optimized for code generation, excellent for SQL
+- **mistral** - Fast and accurate
+- **mixtral** - Best performance but requires more resources
+
+Pull a model:
+```bash
+ollama pull codellama
+```
 
 ## 🐛 Troubleshooting
 
 ### Backend Issues
 
+**"Cannot connect to Ollama"**
+- Ensure Ollama is installed and running: `ollama serve`
+- Check Ollama is accessible at `http://localhost:11434`
+- Pull a model: `ollama pull llama2`
+
 **"OpenAI API Key not found"**
 - Ensure `.env` file exists with valid `OPENAI_API_KEY`
+- Or switch to Ollama by setting `LLM_PROVIDER=ollama`
 
 **"Failed to connect to MySQL"**
 - Verify MySQL server is running
