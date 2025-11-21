@@ -1,0 +1,1 @@
+"""AskQL Backend Application."""
